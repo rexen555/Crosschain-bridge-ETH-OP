@@ -1,0 +1,29 @@
+// Ethereum contract
+pragma solidity ^0.8.0;
+
+interface IGatewayRouter {
+    function deposit(address _l1Token, uint256 _amount) external payable;
+    function withdraw(address _l1Token, uint256 _amount) external;
+}
+
+contract CrossChainBridge {
+    IGatewayRouter public immutable gatewayRouter;
+    address public immutable l1Token;
+    address public immutable l2Token;
+
+    constructor(address _gatewayRouter, address _l1Token, address _l2Token) {
+        gatewayRouter = IGatewayRouter(_gatewayRouter);
+        l1Token = _l1Token;
+        l2Token = _l2Token;
+    }
+
+    function deposit(uint256 _amount) external payable {
+        require(msg.value == _amount, "Incorrect ETH amount");
+        gatewayRouter.deposit{value: msg.value}(l1Token, _amount);
+    }
+
+    function withdraw(uint256 _amount) external {
+        gatewayRouter.withdraw(l1Token, _amount);
+        payable(msg.sender).transfer(_amount);
+    }
+}
